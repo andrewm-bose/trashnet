@@ -39,3 +39,7 @@ luac.out
 *.hex
 
 *.pyc
+
+# Environment files (credentials)
+.env
+__pycache__/
