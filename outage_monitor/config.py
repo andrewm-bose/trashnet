@@ -33,10 +33,10 @@ class ArcGISConfig:
 class DenverArea:
     """Bounding box for the Denver metro area (approximate)."""
 
-    min_lat: float = 39.5
-    max_lat: float = 39.95
+    min_lat: float = 39.55
+    max_lat: float = 39.9
     min_lon: float = -105.2
-    max_lon: float = -104.6
+    max_lon: float = -104.85
 
 
 @dataclass
