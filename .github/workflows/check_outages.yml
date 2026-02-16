@@ -1,0 +1,41 @@
+name: Check Denver Power Outages
+
+on:
+  schedule:
+    # Run every 6 hours: midnight, 6am, noon, 6pm (UTC)
+    # That's roughly 5pm, 11pm, 5am, 11am Mountain Time
+    - cron: '0 0,6,12,18 * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  check-outages:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements-outage.txt
+
+      - name: Check for outages
+        env:
+          MIN_CUSTOMERS: ${{ vars.MIN_CUSTOMERS || '100' }}
+          MIN_DURATION_HOURS: ${{ vars.MIN_DURATION_HOURS || '2.0' }}
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER || 'smtp.gmail.com' }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT || '587' }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
+          EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
+          SMS_RECIPIENTS: ${{ secrets.SMS_RECIPIENTS }}
+          GROCERY_SEARCH_ENABLED: ${{ vars.GROCERY_SEARCH_ENABLED || 'false' }}
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          GROCERY_SEARCH_RADIUS: ${{ vars.GROCERY_SEARCH_RADIUS || '3000' }}
+          LOG_LEVEL: INFO
+        run: python -m outage_monitor.main
