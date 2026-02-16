@@ -13,19 +13,20 @@ class OutageCriteria:
 
 
 @dataclass
-class KubraConfig:
-    """Kubra StormCenter API configuration for Xcel Energy."""
+class ArcGISConfig:
+    """ArcGIS REST API configuration for Xcel Energy's outage map."""
 
-    # These IDs identify Xcel Energy's outage map in Kubra's system.
-    # To find/verify them: open https://www.outagemap-xcelenergy.com/outagemap/?state=CO
-    # in your browser, open Developer Tools > Network tab, and look for requests
-    # to kubra.io containing these GUIDs.
-    instance_id: str = os.getenv(
-        "KUBRA_INSTANCE_ID", "1b43510f-b947-437b-9879-c0bd8f6d7816"
+    # Base URL for Xcel's outage MapServer hosted by Esri EMCS.
+    # Layer 2 contains the outage polygons with detail fields.
+    base_url: str = os.getenv(
+        "ARCGIS_BASE_URL",
+        "https://emcs-gis.esriemcs.com/arcgis/rest/services/Xcel/XcelOutage/MapServer",
     )
-    view_id: str = os.getenv("KUBRA_VIEW_ID", "")
+    layer_id: int = int(os.getenv("ARCGIS_LAYER_ID", "2"))
 
-    base_url: str = "https://kubra.io"
+    @property
+    def query_url(self) -> str:
+        return f"{self.base_url}/{self.layer_id}/query"
 
 
 @dataclass

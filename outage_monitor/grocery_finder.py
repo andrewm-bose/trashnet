@@ -5,7 +5,7 @@ import logging
 import requests
 
 from .config import GroceryConfig
-from .kubra_client import Outage
+from .xcel_client import Outage
 
 logger = logging.getLogger(__name__)
 

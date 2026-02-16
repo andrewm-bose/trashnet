@@ -9,15 +9,15 @@ import os
 import sys
 
 from .config import (
+    ArcGISConfig,
     GroceryConfig,
-    KubraConfig,
     NotificationConfig,
     OutageCriteria,
 )
 from .grocery_finder import find_groceries_for_outages
-from .kubra_client import KubraClient
 from .notifier import send_notifications
 from .outage_filter import filter_outages
+from .xcel_client import XcelOutageClient
 
 
 def setup_logging() -> None:
@@ -35,19 +35,11 @@ def main() -> int:
 
     logger.info("Starting Denver Power Outage Monitor")
 
-    # Validate required config
-    kubra_config = KubraConfig()
-    if not kubra_config.instance_id or not kubra_config.view_id:
-        logger.error(
-            "KUBRA_INSTANCE_ID and KUBRA_VIEW_ID must be set. "
-            "See README for instructions on finding these values."
-        )
-        return 1
-
-    # Fetch outages
-    client = KubraClient(kubra_config)
-    all_outages = client.fetch_outages()
-    logger.info("Fetched %d total outages from Xcel/Kubra", len(all_outages))
+    # Fetch outages from Xcel's ArcGIS MapServer
+    arcgis_config = ArcGISConfig()
+    client = XcelOutageClient(arcgis_config)
+    all_outages = client.fetch_outages(state="CO")
+    logger.info("Fetched %d total outages from Xcel Energy", len(all_outages))
 
     if not all_outages:
         logger.info("No outages reported. All clear!")

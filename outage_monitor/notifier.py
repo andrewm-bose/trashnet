@@ -6,7 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from .config import NotificationConfig
-from .kubra_client import Outage
+from .xcel_client import Outage
 
 logger = logging.getLogger(__name__)
 

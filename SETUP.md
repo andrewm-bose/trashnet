@@ -6,32 +6,16 @@ metro area and sends you text/email notifications when significant outages occur
 ## How It Works
 
 1. A GitHub Actions workflow runs every 6 hours (free, runs in the cloud)
-2. It queries Xcel Energy's outage map (powered by Kubra StormCenter)
+2. It queries Xcel Energy's outage map via their ArcGIS REST API
 3. It filters for outages in the Denver metro area meeting your criteria
 4. If matches are found, it sends you an email and/or text message
 
 **Cost: $0/month** - Uses GitHub Actions (free), Gmail SMTP (free), and
 carrier SMS gateways (free).
 
-## Setup (One-Time, ~15 minutes)
+## Setup (One-Time, ~10 minutes)
 
-### Step 1: Find Xcel's Kubra IDs
-
-The outage map uses a platform called Kubra. You need two IDs from it.
-
-1. Open https://www.outagemap-xcelenergy.com/outagemap/?state=CO in Chrome
-2. Open Developer Tools (F12 or right-click > Inspect)
-3. Go to the **Network** tab
-4. Refresh the page
-5. In the Network filter, type `currentState`
-6. Look for a request URL like:
-   ```
-   https://kubra.io/stormcenter/api/v1/stormcenters/XXXXXXXX/views/YYYYYYYY/currentState
-   ```
-7. The first GUID (`XXXXXXXX`) is your **KUBRA_INSTANCE_ID**
-8. The second GUID (`YYYYYYYY`) is your **KUBRA_VIEW_ID**
-
-### Step 2: Set Up Gmail App Password
+### Step 1: Set Up Gmail App Password
 
 To send emails/texts, you need a Gmail account with an "App Password":
 
@@ -41,7 +25,7 @@ To send emails/texts, you need a Gmail account with an "App Password":
 4. Create a new app password (name it "Outage Monitor" or whatever you want)
 5. Copy the 16-character password it generates
 
-### Step 3: Configure GitHub Repository Secrets
+### Step 2: Configure GitHub Repository Secrets
 
 In your GitHub repository:
 
@@ -50,10 +34,8 @@ In your GitHub repository:
 
 | Secret Name | Value |
 |---|---|
-| `KUBRA_INSTANCE_ID` | The first GUID from Step 1 |
-| `KUBRA_VIEW_ID` | The second GUID from Step 1 |
 | `SMTP_USERNAME` | Your Gmail address (e.g., `you@gmail.com`) |
-| `SMTP_PASSWORD` | The App Password from Step 2 |
+| `SMTP_PASSWORD` | The App Password from Step 1 |
 | `FROM_EMAIL` | Same Gmail address |
 | `EMAIL_RECIPIENTS` | Comma-separated emails (e.g., `you@gmail.com,friend@gmail.com`) |
 | `SMS_RECIPIENTS` | Comma-separated SMS gateways (see below) |
@@ -80,9 +62,9 @@ To send text messages for free, use your phone number + carrier gateway:
 
 Multiple recipients: `5551234567@tmomail.net,5559876543@vtext.com`
 
-### Step 4: Test It
+### Step 3: Test It
 
-1. Go to **Actions** tab in your GitHub repo
+1. Go to the **Actions** tab in your GitHub repo
 2. Click **Check Denver Power Outages** workflow
 3. Click **Run workflow** > **Run workflow**
 4. Watch the logs to see if it connects and fetches data
@@ -127,13 +109,25 @@ schedule:
   # - cron: '0 */4 * * *'      # Every 4 hours
 ```
 
+## Data Source
+
+This tool queries Xcel Energy's outage map directly via their public ArcGIS
+REST API endpoint:
+
+```
+https://emcs-gis.esriemcs.com/arcgis/rest/services/Xcel/XcelOutage/MapServer
+```
+
+No API key or authentication is required — this is the same endpoint that
+powers the public outage map at https://www.outagemap-xcelenergy.com/outagemap/
+
 ## Architecture
 
 ```
 outage_monitor/
 ├── main.py           # Entry point - orchestrates everything
 ├── config.py         # All configuration (env vars)
-├── kubra_client.py   # Fetches outage data from Xcel/Kubra API
+├── xcel_client.py    # Fetches outage data from Xcel's ArcGIS API
 ├── outage_filter.py  # Filters by location + criteria
 ├── grocery_finder.py # Optional Google Places integration
 └── notifier.py       # Sends email + SMS notifications

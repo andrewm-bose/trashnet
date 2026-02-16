@@ -25,8 +25,6 @@ jobs:
 
       - name: Check for outages
         env:
-          KUBRA_INSTANCE_ID: ${{ secrets.KUBRA_INSTANCE_ID }}
-          KUBRA_VIEW_ID: ${{ secrets.KUBRA_VIEW_ID }}
           MIN_CUSTOMERS: ${{ vars.MIN_CUSTOMERS || '100' }}
           MIN_DURATION_HOURS: ${{ vars.MIN_DURATION_HOURS || '2.0' }}
           SMTP_SERVER: ${{ secrets.SMTP_SERVER || 'smtp.gmail.com' }}

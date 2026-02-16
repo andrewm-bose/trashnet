@@ -3,7 +3,7 @@
 import logging
 
 from .config import DenverArea, OutageCriteria
-from .kubra_client import Outage
+from .xcel_client import Outage
 
 logger = logging.getLogger(__name__)
 
