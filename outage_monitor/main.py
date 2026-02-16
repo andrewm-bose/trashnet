@@ -12,6 +12,7 @@ from .config import (
     ArcGISConfig,
     GroceryConfig,
     NotificationConfig,
+    NtfyConfig,
     OutageCriteria,
 )
 from .grocery_finder import find_groceries_for_outages
@@ -68,7 +69,8 @@ def main() -> int:
 
     # Send notifications
     notification_config = NotificationConfig()
-    sent = send_notifications(matching, notification_config, grocery_data)
+    ntfy_config = NtfyConfig()
+    sent = send_notifications(matching, notification_config, ntfy_config, grocery_data)
 
     if sent:
         logger.info("Notifications sent successfully")

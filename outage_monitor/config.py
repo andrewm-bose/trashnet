@@ -71,6 +71,16 @@ class NotificationConfig:
 
 
 @dataclass
+class NtfyConfig:
+    """Configuration for ntfy.sh push notifications."""
+
+    # ntfy topic URL, e.g. "https://ntfy.sh/your-secret-topic"
+    # or a self-hosted instance like "https://ntfy.example.com/topic"
+    topic: str = os.getenv("NTFY_TOPIC", "")
+    priority: str = os.getenv("NTFY_PRIORITY", "high")
+
+
+@dataclass
 class GroceryConfig:
     """Configuration for finding grocery stores near outages."""
 
