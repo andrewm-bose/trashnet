@@ -11,7 +11,7 @@ metro area and sends you text/email notifications when significant outages occur
 4. If matches are found, it sends you an email and/or text message
 
 **Cost: $0/month** - Uses GitHub Actions (free), Gmail SMTP (free), and
-carrier SMS gateways (free).
+ntfy push notifications (free).
 
 ## Setup (One-Time, ~10 minutes)
 
@@ -38,7 +38,8 @@ In your GitHub repository:
 | `SMTP_PASSWORD` | The App Password from Step 1 |
 | `FROM_EMAIL` | Same Gmail address |
 | `EMAIL_RECIPIENTS` | Comma-separated emails (e.g., `you@gmail.com,friend@gmail.com`) |
-| `SMS_RECIPIENTS` | Comma-separated SMS gateways (see below) |
+| `SMS_RECIPIENTS` | *(Optional)* Comma-separated SMS gateways (see below) |
+| `NTFY_TOPIC` | *(Optional)* ntfy topic URL (see below) |
 
 3. Optionally add these **Variables** (under the Variables tab):
 
@@ -46,10 +47,21 @@ In your GitHub repository:
 |---|---|---|
 | `MIN_CUSTOMERS` | `100` | Min customers affected to trigger alert |
 | `MIN_DURATION_HOURS` | `2.0` | Min outage duration (hours) to trigger alert |
+| `NTFY_PRIORITY` | `high` | ntfy notification priority (`urgent`, `high`, `default`, `low`, `min`) |
 
-### SMS Gateway Addresses
+### ntfy Push Notifications (Recommended)
 
-To send text messages for free, use your phone number + carrier gateway:
+The easiest way to get phone notifications — free, no account needed:
+
+1. Install the **ntfy** app ([Android](https://play.google.com/store/apps/details?id=io.heckel.ntfy) / [iOS](https://apps.apple.com/us/app/ntfy/id1625396347))
+2. Subscribe to a topic (pick something unique and secret, e.g. `my-denver-outages-x7k9`)
+3. Add the secret `NTFY_TOPIC` = `https://ntfy.sh/my-denver-outages-x7k9`
+
+That's it! You can use ntfy by itself or alongside email.
+
+### SMS Gateway Addresses (Legacy)
+
+Some carriers still support email-to-SMS gateways. Use your phone number + carrier gateway:
 
 | Carrier | Format |
 |---|---|
@@ -61,6 +73,8 @@ To send text messages for free, use your phone number + carrier gateway:
 | Metro PCS | `5551234567@mymetropcs.com` |
 
 Multiple recipients: `5551234567@tmomail.net,5559876543@vtext.com`
+
+> **Note:** Some carriers (e.g., AT&T) have discontinued SMS email gateways. Use ntfy instead.
 
 ### Step 3: Test It
 
@@ -130,5 +144,5 @@ outage_monitor/
 ├── xcel_client.py    # Fetches outage data from Xcel's ArcGIS API
 ├── outage_filter.py  # Filters by location + criteria
 ├── grocery_finder.py # Optional Google Places integration
-└── notifier.py       # Sends email + SMS notifications
+└── notifier.py       # Sends email, SMS, and ntfy notifications
 ```

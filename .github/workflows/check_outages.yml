@@ -34,6 +34,8 @@ jobs:
           FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
           EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
           SMS_RECIPIENTS: ${{ secrets.SMS_RECIPIENTS }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_PRIORITY: ${{ vars.NTFY_PRIORITY || 'high' }}
           GROCERY_SEARCH_ENABLED: ${{ vars.GROCERY_SEARCH_ENABLED || 'false' }}
           GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
           GROCERY_SEARCH_RADIUS: ${{ vars.GROCERY_SEARCH_RADIUS || '3000' }}

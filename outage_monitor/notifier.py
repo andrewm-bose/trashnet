@@ -1,11 +1,12 @@
-"""Send notifications about power outages via email and SMS."""
+"""Send notifications about power outages via email, SMS, and ntfy."""
 
 import logging
 import smtplib
+import urllib.request
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from .config import NotificationConfig
+from .config import NotificationConfig, NtfyConfig
 from .xcel_client import Outage
 
 logger = logging.getLogger(__name__)
@@ -79,71 +80,113 @@ def build_notification(
     return subject, "\n".join(body_lines)
 
 
+def send_ntfy(
+    subject: str,
+    body: str,
+    config: NtfyConfig | None = None,
+) -> bool:
+    """Send a push notification via ntfy.sh.
+
+    Returns True if the notification was sent successfully.
+    """
+    config = config or NtfyConfig()
+    if not config.topic:
+        return False
+
+    try:
+        req = urllib.request.Request(
+            config.topic,
+            data=body.encode("utf-8"),
+            headers={
+                "Title": subject,
+                "Priority": config.priority,
+                "Tags": "zap",
+            },
+        )
+        urllib.request.urlopen(req, timeout=15)
+        logger.info("ntfy notification sent to %s", config.topic)
+        return True
+    except (urllib.error.URLError, OSError) as e:
+        logger.error("Failed to send ntfy notification: %s", e)
+        return False
+
+
 def send_notifications(
     outages: list[Outage],
     config: NotificationConfig | None = None,
+    ntfy_config: NtfyConfig | None = None,
     grocery_data: dict[str, str] | None = None,
 ) -> bool:
-    """Send notifications about outages via email and SMS.
+    """Send notifications about outages via email, SMS, and ntfy.
 
     Returns True if at least one notification was sent successfully.
     """
     config = config or NotificationConfig()
+    ntfy_config = ntfy_config or NtfyConfig()
     subject, body = build_notification(outages, grocery_data)
-
-    if not config.smtp_username or not config.smtp_password:
-        logger.error(
-            "SMTP credentials not configured. Set SMTP_USERNAME and SMTP_PASSWORD."
-        )
-        # Print to stdout as fallback so GitHub Actions logs capture it
-        print(f"\n{subject}\n{'=' * len(subject)}\n{body}")
-        return False
-
-    all_recipients = config.email_recipients + config.sms_recipients
-    if not all_recipients:
-        logger.error("No recipients configured. Set EMAIL_RECIPIENTS or SMS_RECIPIENTS.")
-        print(f"\n{subject}\n{'=' * len(subject)}\n{body}")
-        return False
 
     success = False
 
-    try:
-        with smtplib.SMTP(config.smtp_server, config.smtp_port, timeout=30) as server:
-            server.starttls()
-            server.login(config.smtp_username, config.smtp_password)
+    # Send ntfy push notification (independent of SMTP)
+    if ntfy_config.topic:
+        if send_ntfy(subject, body, ntfy_config):
+            success = True
 
-            # Send full email to email recipients
-            for recipient in config.email_recipients:
-                try:
-                    msg = MIMEMultipart()
-                    msg["From"] = config.from_email or config.smtp_username
-                    msg["To"] = recipient
-                    msg["Subject"] = subject
-                    msg.attach(MIMEText(body, "plain"))
-                    server.send_message(msg)
-                    logger.info("Email sent to %s", recipient)
-                    success = True
-                except smtplib.SMTPException as e:
-                    logger.error("Failed to send email to %s: %s", recipient, e)
+    # Check SMTP config for email/SMS
+    has_smtp = config.smtp_username and config.smtp_password
+    all_recipients = config.email_recipients + config.sms_recipients
 
-            # Send abbreviated SMS to SMS recipients (carrier gateways have
-            # character limits, typically 160 chars per segment)
-            sms_body = _build_sms_body(outages)
-            for recipient in config.sms_recipients:
-                try:
-                    msg = MIMEMultipart()
-                    msg["From"] = config.from_email or config.smtp_username
-                    msg["To"] = recipient
-                    msg["Subject"] = ""  # SMS doesn't use subject
-                    msg.attach(MIMEText(sms_body, "plain"))
-                    server.send_message(msg)
-                    logger.info("SMS sent to %s", recipient)
-                    success = True
-                except smtplib.SMTPException as e:
-                    logger.error("Failed to send SMS to %s: %s", recipient, e)
+    if all_recipients and not has_smtp:
+        logger.error(
+            "SMTP credentials not configured. Set SMTP_USERNAME and SMTP_PASSWORD."
+        )
 
-    except (smtplib.SMTPException, OSError) as e:
-        logger.error("SMTP connection failed: %s", e)
+    if not all_recipients and not ntfy_config.topic:
+        logger.error(
+            "No recipients configured. Set EMAIL_RECIPIENTS, SMS_RECIPIENTS, or NTFY_TOPIC."
+        )
+
+    if has_smtp and all_recipients:
+        try:
+            with smtplib.SMTP(config.smtp_server, config.smtp_port, timeout=30) as server:
+                server.starttls()
+                server.login(config.smtp_username, config.smtp_password)
+
+                # Send full email to email recipients
+                for recipient in config.email_recipients:
+                    try:
+                        msg = MIMEMultipart()
+                        msg["From"] = config.from_email or config.smtp_username
+                        msg["To"] = recipient
+                        msg["Subject"] = subject
+                        msg.attach(MIMEText(body, "plain"))
+                        server.send_message(msg)
+                        logger.info("Email sent to %s", recipient)
+                        success = True
+                    except smtplib.SMTPException as e:
+                        logger.error("Failed to send email to %s: %s", recipient, e)
+
+                # Send abbreviated SMS to SMS recipients (carrier gateways have
+                # character limits, typically 160 chars per segment)
+                sms_body = _build_sms_body(outages)
+                for recipient in config.sms_recipients:
+                    try:
+                        msg = MIMEMultipart()
+                        msg["From"] = config.from_email or config.smtp_username
+                        msg["To"] = recipient
+                        msg["Subject"] = ""  # SMS doesn't use subject
+                        msg.attach(MIMEText(sms_body, "plain"))
+                        server.send_message(msg)
+                        logger.info("SMS sent to %s", recipient)
+                        success = True
+                    except smtplib.SMTPException as e:
+                        logger.error("Failed to send SMS to %s: %s", recipient, e)
+
+        except (smtplib.SMTPException, OSError) as e:
+            logger.error("SMTP connection failed: %s", e)
+
+    if not success:
+        # Print to stdout as fallback so GitHub Actions logs capture it
         print(f"\n{subject}\n{'=' * len(subject)}\n{body}")
 
     return success

@@ -9,9 +9,10 @@ import os
 import sys
 
 from .config import (
-    ArcGISConfig,
     GroceryConfig,
+    KubraConfig,
     NotificationConfig,
+    NtfyConfig,
     OutageCriteria,
 )
 from .grocery_finder import find_groceries_for_outages
@@ -35,9 +36,9 @@ def main() -> int:
 
     logger.info("Starting Denver Power Outage Monitor")
 
-    # Fetch outages from Xcel's ArcGIS MapServer
-    arcgis_config = ArcGISConfig()
-    client = XcelOutageClient(arcgis_config)
+    # Fetch outages from Xcel via KUBRA StormCenter
+    kubra_config = KubraConfig()
+    client = XcelOutageClient(kubra_config)
     all_outages = client.fetch_outages(state="CO")
     logger.info("Fetched %d total outages from Xcel Energy", len(all_outages))
 
@@ -68,7 +69,8 @@ def main() -> int:
 
     # Send notifications
     notification_config = NotificationConfig()
-    sent = send_notifications(matching, notification_config, grocery_data)
+    ntfy_config = NtfyConfig()
+    sent = send_notifications(matching, notification_config, ntfy_config, grocery_data)
 
     if sent:
         logger.info("Notifications sent successfully")
