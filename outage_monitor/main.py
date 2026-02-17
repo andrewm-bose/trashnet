@@ -9,8 +9,8 @@ import os
 import sys
 
 from .config import (
-    ArcGISConfig,
     GroceryConfig,
+    KubraConfig,
     NotificationConfig,
     NtfyConfig,
     OutageCriteria,
@@ -36,9 +36,9 @@ def main() -> int:
 
     logger.info("Starting Denver Power Outage Monitor")
 
-    # Fetch outages from Xcel's ArcGIS MapServer
-    arcgis_config = ArcGISConfig()
-    client = XcelOutageClient(arcgis_config)
+    # Fetch outages from Xcel via KUBRA StormCenter
+    kubra_config = KubraConfig()
+    client = XcelOutageClient(kubra_config)
     all_outages = client.fetch_outages(state="CO")
     logger.info("Fetched %d total outages from Xcel Energy", len(all_outages))
 
