@@ -5,11 +5,22 @@ import smtplib
 import urllib.request
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from zoneinfo import ZoneInfo
 
 from .config import NotificationConfig, NtfyConfig
 from .xcel_client import Outage
 
 logger = logging.getLogger(__name__)
+
+_DENVER_TZ = ZoneInfo("America/Denver")
+
+
+def _fmt_time(dt) -> str:
+    """Format a datetime in Mountain time (MST/MDT)."""
+    local = dt.astimezone(_DENVER_TZ)
+    # e.g. "2026-02-17 03:45 PM MST"
+    tz_abbr = local.strftime("%Z")  # MST or MDT depending on DST
+    return local.strftime(f"%Y-%m-%d %I:%M %p {tz_abbr}")
 
 
 def format_outage_text(outage: Outage, grocery_info: str = "") -> str:
@@ -17,6 +28,7 @@ def format_outage_text(outage: Outage, grocery_info: str = "") -> str:
     lines = [
         f"--- Outage {outage.id} ---",
         f"Location: {outage.area_description}",
+        f"Coordinates: {outage.latitude:.5f}, {outage.longitude:.5f}",
         f"Customers affected: {outage.customers_affected:,}",
     ]
 
@@ -28,10 +40,10 @@ def format_outage_text(outage: Outage, grocery_info: str = "") -> str:
             lines.append(f"Duration: {int(hours * 60)} minutes")
 
     if outage.start_time:
-        lines.append(f"Started: {outage.start_time.strftime('%Y-%m-%d %H:%M UTC')}")
+        lines.append(f"Started: {_fmt_time(outage.start_time)}")
 
     if outage.etr:
-        lines.append(f"Est. restoration: {outage.etr.strftime('%Y-%m-%d %H:%M UTC')}")
+        lines.append(f"Est. restoration: {_fmt_time(outage.etr)}")
 
     lines.append(f"Cause: {outage.cause}")
     lines.append(f"Crew status: {outage.crew_status}")
