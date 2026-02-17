@@ -4,14 +4,8 @@ on:
   schedule:
     # Run every 6 hours: midnight, 6am, noon, 6pm (UTC)
     # That's roughly 5pm, 11pm, 5am, 11am Mountain Time
-    - cron: '0 0,6,12,18 * * *'
-  workflow_dispatch:
-    inputs:
-      test_mode:
-        description: 'Send a test notification (fake outage, skips real API)'
-        required: false
-        type: boolean
-        default: false
+    - cron: '0 */4 * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
 
 jobs:
   check-outages:
@@ -46,4 +40,4 @@ jobs:
           GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
           GROCERY_SEARCH_RADIUS: ${{ vars.GROCERY_SEARCH_RADIUS || '3000' }}
           LOG_LEVEL: INFO
-        run: python -m outage_monitor.main ${{ inputs.test_mode == true && '--test' || '' }}
+        run: python -m outage_monitor.main
