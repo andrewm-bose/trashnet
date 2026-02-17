@@ -55,18 +55,18 @@ class NotificationConfig:
         if addr.strip()
     ])
 
-    # Comma-separated list of SMS-via-email addresses
+    # SMS-via-email support (commented out — uncomment to re-enable)
     # Format: 5551234567@carrier_gateway
     # Common gateways:
     #   T-Mobile: @tmomail.net
     #   AT&T: @txt.att.net
     #   Verizon: @vtext.com
     #   Sprint: @messaging.sprintpcs.com
-    sms_recipients: list[str] = field(default_factory=lambda: [
-        addr.strip()
-        for addr in os.getenv("SMS_RECIPIENTS", "").split(",")
-        if addr.strip()
-    ])
+    # sms_recipients: list[str] = field(default_factory=lambda: [
+    #     addr.strip()
+    #     for addr in os.getenv("SMS_RECIPIENTS", "").split(",")
+    #     if addr.strip()
+    # ])
 
 
 @dataclass

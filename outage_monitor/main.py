@@ -1,7 +1,7 @@
 """Denver Power Outage Monitor - Main entry point.
 
 Checks Xcel Energy's outage map for significant outages in the Denver metro
-area and sends notifications via email/SMS.
+area and sends notifications via email and ntfy.
 
 Usage:
     python -m outage_monitor.main          # normal run

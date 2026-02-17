@@ -33,7 +33,7 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           FROM_EMAIL: ${{ secrets.FROM_EMAIL }}
           EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS }}
-          SMS_RECIPIENTS: ${{ secrets.SMS_RECIPIENTS }}
+          # SMS_RECIPIENTS: ${{ secrets.SMS_RECIPIENTS }}  # uncomment to re-enable SMS
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           NTFY_PRIORITY: ${{ vars.NTFY_PRIORITY || 'high' }}
           GROCERY_SEARCH_ENABLED: ${{ vars.GROCERY_SEARCH_ENABLED || 'false' }}

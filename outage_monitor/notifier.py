@@ -1,4 +1,4 @@
-"""Send notifications about power outages via email, SMS, and ntfy."""
+"""Send notifications about power outages via email and ntfy."""
 
 import logging
 import smtplib
@@ -129,7 +129,7 @@ def send_notifications(
     ntfy_config: NtfyConfig | None = None,
     grocery_data: dict[str, str] | None = None,
 ) -> bool:
-    """Send notifications about outages via email, SMS, and ntfy.
+    """Send notifications about outages via email and ntfy.
 
     Returns True if at least one notification was sent successfully.
     """
@@ -144,9 +144,9 @@ def send_notifications(
         if send_ntfy(subject, body, ntfy_config):
             success = True
 
-    # Check SMTP config for email/SMS
+    # Check SMTP config for email
     has_smtp = config.smtp_username and config.smtp_password
-    all_recipients = config.email_recipients + config.sms_recipients
+    all_recipients = config.email_recipients
 
     if all_recipients and not has_smtp:
         logger.error(
@@ -155,7 +155,7 @@ def send_notifications(
 
     if not all_recipients and not ntfy_config.topic:
         logger.error(
-            "No recipients configured. Set EMAIL_RECIPIENTS, SMS_RECIPIENTS, or NTFY_TOPIC."
+            "No recipients configured. Set EMAIL_RECIPIENTS or NTFY_TOPIC."
         )
 
     if has_smtp and all_recipients:
@@ -178,22 +178,6 @@ def send_notifications(
                     except smtplib.SMTPException as e:
                         logger.error("Failed to send email to %s: %s", recipient, e)
 
-                # Send abbreviated SMS to SMS recipients (carrier gateways have
-                # character limits, typically 160 chars per segment)
-                sms_body = _build_sms_body(outages)
-                for recipient in config.sms_recipients:
-                    try:
-                        msg = MIMEMultipart()
-                        msg["From"] = config.from_email or config.smtp_username
-                        msg["To"] = recipient
-                        msg["Subject"] = ""  # SMS doesn't use subject
-                        msg.attach(MIMEText(sms_body, "plain"))
-                        server.send_message(msg)
-                        logger.info("SMS sent to %s", recipient)
-                        success = True
-                    except smtplib.SMTPException as e:
-                        logger.error("Failed to send SMS to %s: %s", recipient, e)
-
         except (smtplib.SMTPException, OSError) as e:
             logger.error("SMTP connection failed: %s", e)
 
@@ -204,19 +188,35 @@ def send_notifications(
     return success
 
 
-def _build_sms_body(outages: list[Outage]) -> str:
-    """Build a short SMS-friendly message."""
-    count = len(outages)
-    total = sum(o.customers_affected for o in outages)
-    lines = [f"Denver Power Alert: {count} outage(s), {total:,} customers"]
-
-    for outage in sorted(outages, key=lambda o: o.customers_affected, reverse=True)[:3]:
-        duration = ""
-        if outage.duration_hours is not None:
-            duration = f", {outage.duration_hours:.0f}h"
-        lines.append(f"- {outage.customers_affected:,} cust{duration} @ {outage.area_description}")
-
-    if count > 3:
-        lines.append(f"+ {count - 3} more")
-
-    return "\n".join(lines)
+# --- SMS support (commented out — uncomment to re-enable) ---
+# def _build_sms_body(outages: list[Outage]) -> str:
+#     """Build a short SMS-friendly message."""
+#     count = len(outages)
+#     total = sum(o.customers_affected for o in outages)
+#     lines = [f"Denver Power Alert: {count} outage(s), {total:,} customers"]
+#
+#     for outage in sorted(outages, key=lambda o: o.customers_affected, reverse=True)[:3]:
+#         duration = ""
+#         if outage.duration_hours is not None:
+#             duration = f", {outage.duration_hours:.0f}h"
+#         lines.append(f"- {outage.customers_affected:,} cust{duration} @ {outage.area_description}")
+#
+#     if count > 3:
+#         lines.append(f"+ {count - 3} more")
+#
+#     return "\n".join(lines)
+#
+# To re-enable SMS in send_notifications, add this block after the email loop:
+#     sms_body = _build_sms_body(outages)
+#     for recipient in config.sms_recipients:
+#         try:
+#             msg = MIMEMultipart()
+#             msg["From"] = config.from_email or config.smtp_username
+#             msg["To"] = recipient
+#             msg["Subject"] = ""  # SMS doesn't use subject
+#             msg.attach(MIMEText(sms_body, "plain"))
+#             server.send_message(msg)
+#             logger.info("SMS sent to %s", recipient)
+#             success = True
+#         except smtplib.SMTPException as e:
+#             logger.error("Failed to send SMS to %s: %s", recipient, e)
