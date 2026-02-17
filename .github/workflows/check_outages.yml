@@ -2,9 +2,9 @@ name: Check Denver Power Outages
 
 on:
   schedule:
-    # Run every 6 hours: midnight, 6am, noon, 6pm (UTC)
-    # That's roughly 5pm, 11pm, 5am, 11am Mountain Time
-    - cron: '0 */4 * * *'
+    # Run every x hours: 3pm, 7pm, 11pm, 2am (UTC)
+    # That's roughly 8am, 12pm, 4pm, 7pm Mountain Time
+    - cron: '0 2,15,19,23 * * *'
   workflow_dispatch: # Allow manual trigger from GitHub UI
 
 jobs:
