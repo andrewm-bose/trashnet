@@ -13,20 +13,18 @@ class OutageCriteria:
 
 
 @dataclass
-class KubraConfig:
-    """KUBRA StormCenter configuration for Xcel Energy's outage map.
+class ArcGISConfig:
+    """ArcGIS MapServer configuration for Xcel Energy's outage map.
 
-    Xcel's outage map is powered by KUBRA StormCenter.  The instance and
-    view IDs are extracted from the live outage map at
-    https://www.outagemap-xcelenergy.com/outagemap/
+    Xcel's outage map is powered by Esri ArcGIS.  The endpoint URL
+    points to the outage feature layer on their MapServer.
+
+    The outage map is at: https://www.outagemap-xcelenergy.com/outagemap/
     """
 
-    base_url: str = os.getenv("KUBRA_BASE_URL", "https://kubra.io")
-    instance_id: str = os.getenv(
-        "KUBRA_INSTANCE_ID", "877fd1e9-4162-473f-b782-d8a53a85326b"
-    )
-    view_id: str = os.getenv(
-        "KUBRA_VIEW_ID", "8fe9d356-96bc-41f1-b353-6720eb408936"
+    base_url: str = os.getenv(
+        "ARCGIS_OUTAGE_URL",
+        "https://emcs-gis.esriemcs.com/arcgis/rest/services/Xcel/XcelOutage/MapServer/3",
     )
 
 

@@ -75,7 +75,7 @@ def build_notification(
 
     body_lines.append("---")
     body_lines.append("Denver Power Outage Monitor")
-    body_lines.append("Data source: Xcel Energy via Kubra StormCenter")
+    body_lines.append("Data source: Xcel Energy via ArcGIS MapServer")
 
     return subject, "\n".join(body_lines)
 

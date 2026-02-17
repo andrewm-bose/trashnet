@@ -14,8 +14,8 @@ import sys
 from datetime import datetime, timedelta, timezone
 
 from .config import (
+    ArcGISConfig,
     GroceryConfig,
-    KubraConfig,
     NotificationConfig,
     NtfyConfig,
     OutageCriteria,
@@ -65,9 +65,9 @@ def main() -> int:
     else:
         logger.info("Starting Denver Power Outage Monitor")
 
-        # Fetch outages from Xcel via KUBRA StormCenter
-        kubra_config = KubraConfig()
-        client = XcelOutageClient(kubra_config)
+        # Fetch outages from Xcel via ArcGIS MapServer
+        arcgis_config = ArcGISConfig()
+        client = XcelOutageClient(arcgis_config)
         all_outages = client.fetch_outages(state="CO")
         logger.info("Fetched %d total outages from Xcel Energy", len(all_outages))
 
